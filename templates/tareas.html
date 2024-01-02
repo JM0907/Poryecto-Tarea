@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lista de Tareas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <style>
+        .center-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .task-name {
+            text-transform: uppercase;
+        }
+
+        .task-progress {
+            margin-top: 10px; /* Ajusta la distancia hacia abajo según tus preferencias */
+        }
+    </style>
+</head>
+<body>
+    <div class="center-container">
+        <section class="section">
+            <div class="container">
+                <center><h1 class="title">LISTA DE TAREAS GRUPO #4</h1></center>
+                <br>
+                <form id="taskForm" method="POST" action="/">
+                    <input class="input" type="text" name="tarea" id="taskInput" placeholder="Nueva tarea">
+                    <br>
+                    <br>
+                    <label for="datetimeInput">Fecha y Hora:</label>
+                    <input class="input" type="datetime-local" name="datetimeInput" id="datetimeInput">
+                    <br>
+                    <br>
+                    <center><button class="button is-primary" type="button" onclick="addTask()">Añadir Tarea</button></center>
+                </form>
+                <ul id="taskList"></ul>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function addTask() {
+            var taskInput = document.getElementById('taskInput');
+            var datetimeInput = document.getElementById('datetimeInput');
+            var taskList = document.getElementById('taskList');
+
+            var task = document.createElement('li');
+            var taskName = document.createElement('div');
+            taskName.textContent = taskInput.value.toUpperCase();
+            taskName.className = 'task-name';
+            task.appendChild(taskName);
+
+            var taskDatetime = document.createElement('div');
+            taskDatetime.textContent = 'Fecha y Hora: ' + datetimeInput.value;
+            task.appendChild(taskDatetime);
+
+            task.setAttribute('data-status', 'incomplete');
+
+            var deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Eliminar';
+            deleteButton.className = 'button is-danger';
+            deleteButton.onclick = function() {
+                taskList.removeChild(task);
+            };
+
+            var doneButton = document.createElement('button');
+            doneButton.textContent = 'Completado';
+            doneButton.className = 'button is-success';
+            doneButton.onclick = function() {
+                taskName.style.textDecoration = 'line-through';
+                task.setAttribute('data-status', 'complete');
+                updateTaskStatus();
+            };
+
+            var progress = document.createElement('progress');
+            progress.className = 'progress is-small task-progress';
+            progress.max = '100';
+            progress.value = '0';
+            task.appendChild(progress);
+
+            task.appendChild(deleteButton);
+            task.appendChild(doneButton);
+            taskList.appendChild(task);
+
+            // Nueva adición: Enviar datos al servidor para agregar la tarea a la base de datos
+            sendDataToServer(taskInput.value, datetimeInput.value);
+            
+            taskInput.value = '';
+            datetimeInput.value = '';
+            updateTaskStatus();
+        }
+
+        function updateTaskStatus() {
+            var tasks = document.querySelectorAll('#taskList li');
+            tasks.forEach(function(task) {
+                var status = task.getAttribute('data-status');
+                var progress = task.querySelector('progress');
+                if (status === 'complete') {
+                    progress.value = '100';
+                    progress.className = 'progress is-small is-success task-progress';
+                } else {
+                    progress.value = '50'; 
+                    progress.className = 'progress is-small is-danger task-progress';
+                }
+            });
+        }
+
+        function sendDataToServer(taskName, taskDatetime) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/insert_tarea', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    console.log(xhr.responseText);
+                }
+            };
+            var data = {
+                tarea: taskName,
+                datetime: taskDatetime
+            };
+            xhr.send(JSON.stringify(data));
+        }
+    </script>
+</body>
+</html>
